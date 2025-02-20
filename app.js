@@ -18,6 +18,7 @@ app.use(cookieParser());
 
 app.use(cors({
   origin: function(origin, callback) {
+    console.log(process.env.FRONTEND_URL)
     // allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     const allowedOrigins = [
