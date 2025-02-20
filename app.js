@@ -33,6 +33,7 @@ app.use(cors({
     }
   },
   credentials: true,
+  optionsSuccessStatus: 200,
 }));
 
 // Middleware to parse JSON requests

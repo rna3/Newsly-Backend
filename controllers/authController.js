@@ -31,13 +31,14 @@ export const register = async (req, res, next) => {
     const payload = { id: newUser.id, email: newUser.email };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Set HTTP-only cookie for token
+    // Set HTTP-only cookie options
     res.cookie('accessToken', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // use secure flag in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      secure: process.env.NODE_ENV === 'production', // true for HTTPS in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
       path: '/',
+      domain: process.env.COOKIE_DOMAIN || '.onrender.com', // Ensure cookie is available across subdomains
     });
 
     res.status(201).json({ user: newUser });
@@ -58,16 +59,17 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Create JWT token (expires in 7 days)
     const payload = { id: user.id, email: user.email };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Set HTTP-only cookie for token
+    // Set HTTP-only cookie with cross-site settings for production
     res.cookie('accessToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+      domain: process.env.COOKIE_DOMAIN || '.onrender.com',
     });
 
     res.json({ user });
@@ -78,11 +80,13 @@ export const login = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    // Clear the access token cookie.
+    // Clear the access token cookie using the same settings to ensure it matches.
     res.clearCookie('accessToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/',
+      domain: process.env.COOKIE_DOMAIN || '.onrender.com',
     });
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
