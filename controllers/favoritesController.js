@@ -1,15 +1,12 @@
-// backend/controllers/favoritesController.js
-import { createFavorite, getFavoritesByUserId, deleteFavoritesByIds } from '../services/favoriteService.js';
+import Favorite from '../models/Favorite.js';
 
 export const addFavorite = async (req, res, next) => {
   try {
     const user_id = req.user.id;
-    // Expect the frontend to send the necessary article data in the request body.
     const articleData = req.body;
-    const favorite = await createFavorite(user_id, articleData);
+    const favorite = await Favorite.create(user_id, articleData);
     res.status(201).json(favorite);
   } catch (error) {
-    // If there's a duplicate key violation, customize the error message.
     if (error.code === '23505') {
       error.statusCode = 400;
       error.message = 'This article is in your favorites';
@@ -21,7 +18,7 @@ export const addFavorite = async (req, res, next) => {
 export const getFavorites = async (req, res, next) => {
   try {
     const user_id = req.user.id;
-    const favorites = await getFavoritesByUserId(user_id);
+    const favorites = await Favorite.getByUserId(user_id);
     res.json(favorites);
   } catch (error) {
     next(error);
@@ -37,7 +34,7 @@ export const deleteFavorites = async (req, res, next) => {
       err.statusCode = 400;
       throw err;
     }
-    const deletedFavorites = await deleteFavoritesByIds(user_id, ids);
+    const deletedFavorites = await Favorite.deleteByIds(user_id, ids);
     res.json({ deleted: deletedFavorites.length });
   } catch (error) {
     next(error);
