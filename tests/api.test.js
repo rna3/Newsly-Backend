@@ -7,9 +7,9 @@ describe('Backend API Tests', () => {
   const testUser = {
     username: "testuser",
     email: "testuser@example.com",
-    password: "password123"
+    password: "Password123" // meets strength requirements
   };
-  let token; // to store JWT
+  let cookie; // to store the cookie from login response
   let favoriteId;
   let commentId;
   const sampleArticle = {
@@ -38,30 +38,34 @@ describe('Backend API Tests', () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send(testUser);
+      // The updated endpoint returns { user: {...} }
       expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('user');
+      expect(res.body.user).toHaveProperty('id');
     });
 
-    it('should login the user and return a token', async () => {
+    it('should login the user and set an HTTP-only cookie', async () => {
       const res = await request(app)
         .post('/api/auth/login')
         .send({ email: testUser.email, password: testUser.password });
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('token');
-      token = res.body.token;
+      expect(res.body).toHaveProperty('user');
+      // Capture the set-cookie header array
+      cookie = res.headers['set-cookie'];
+      expect(cookie).toBeDefined();
     });
   });
 
   describe('Favorites Endpoints', () => {
-    it('should not allow access to favorites without token', async () => {
+    it('should not allow access to favorites without cookie', async () => {
       const res = await request(app).get('/api/favorites');
       expect(res.statusCode).toEqual(401);
     });
 
-    it('should add a favorite with valid token', async () => {
+    it('should add a favorite with valid cookie', async () => {
       const res = await request(app)
         .post('/api/favorites')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', cookie)
         .send(sampleArticle);
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('id');
@@ -71,7 +75,7 @@ describe('Backend API Tests', () => {
     it('should retrieve favorites for the user', async () => {
       const res = await request(app)
         .get('/api/favorites')
-        .set('Authorization', `Bearer ${token}`);
+        .set('Cookie', cookie);
       expect(res.statusCode).toEqual(200);
       expect(Array.isArray(res.body)).toBeTruthy();
       const fav = res.body.find(f => f.id === favoriteId);
@@ -81,7 +85,7 @@ describe('Backend API Tests', () => {
     it('should delete the favorite', async () => {
       const res = await request(app)
         .delete('/api/favorites')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', cookie)
         .send({ ids: [favoriteId] });
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('deleted');
@@ -93,7 +97,7 @@ describe('Backend API Tests', () => {
     it('should add a comment', async () => {
       const res = await request(app)
         .post('/api/comments')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', cookie)
         .send({ article_id: articleId, comment: "Test comment" });
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('id');
@@ -104,7 +108,7 @@ describe('Backend API Tests', () => {
     it('should retrieve comments for the article', async () => {
       const res = await request(app)
         .get(`/api/comments?article_id=${encodeURIComponent(articleId)}`)
-        .set('Authorization', `Bearer ${token}`);
+        .set('Cookie', cookie);
       expect(res.statusCode).toEqual(200);
       expect(Array.isArray(res.body)).toBeTruthy();
       const comment = res.body.find(c => c.id === commentId);
@@ -114,7 +118,7 @@ describe('Backend API Tests', () => {
     it('should update a comment', async () => {
       const res = await request(app)
         .patch(`/api/comments/${commentId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', cookie)
         .send({ comment: "Updated comment" });
       expect(res.statusCode).toEqual(200);
       expect(res.body.comment).toEqual("Updated comment");
@@ -123,7 +127,7 @@ describe('Backend API Tests', () => {
     it('should delete a comment', async () => {
       const res = await request(app)
         .delete(`/api/comments/${commentId}`)
-        .set('Authorization', `Bearer ${token}`);
+        .set('Cookie', cookie);
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Comment deleted successfully');
     });
