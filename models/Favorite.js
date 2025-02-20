@@ -1,4 +1,3 @@
-// backend/models/Favorite.js
 import pool from '../db/index.js';
 
 class Favorite {

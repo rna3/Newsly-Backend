@@ -1,4 +1,3 @@
-// backend/models/Comment.js
 import pool from '../db/index.js';
 
 class Comment {
