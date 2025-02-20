@@ -38,7 +38,6 @@ export const register = async (req, res, next) => {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || '.onrender.com', // Ensure cookie is available across subdomains
     });
 
     res.status(201).json({ user: newUser });
@@ -69,7 +68,6 @@ export const login = async (req, res, next) => {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || '.onrender.com',
     });
 
     res.json({ user });
@@ -86,7 +84,6 @@ export const logout = async (req, res, next) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
-      domain: process.env.COOKIE_DOMAIN || '.onrender.com',
     });
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
